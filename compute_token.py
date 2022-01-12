@@ -33,8 +33,7 @@ def compute_tokens(optimal, latSLO):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="NVMe profile tool to get tokens that "
-                                                 "satisfies latency requirement")
+    parser = argparse.ArgumentParser("Compute tokens")
     parser.add_argument("dev_model", help="binary file that stores device model")
     parser.add_argument("latency", type=float, help="tail latency requirement")
     args = parser.parse_args()

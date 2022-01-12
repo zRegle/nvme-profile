@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.covariance import EllipticEnvelope
 
+
 # read data start
 def deserialize_json(dir):
     iops_lat_dict = {}
@@ -50,26 +51,22 @@ def process_raw(iops_lat_dict, dev_dir):
 # read data end
 
 
-# reduce noise start
-def reduce_noise_fix(stat):
-    prev_latency = 0
-    prev_iops = 0
-    for data in stat[:]:
-        cur_iops = sum(data[0])
-        cur_latency = data[1]
-        if prev_latency != 0:
-            lat_diff = math.ceil(abs(cur_latency - prev_latency))
-            iops_diff = math.floor(abs(cur_iops - prev_iops))
-            if lat_diff >= 800 or (iops_diff <= 10):
-                stat.remove(data)
-                continue
-        prev_iops = cur_iops
-        prev_latency = cur_latency
-    return stat
+def curve_fit(raw_stat, factor):
+    result = {}
+    # curve_fitting
+    rw_iops = list(map(lambda x: x[0], raw_stat))
+    weighted_iops = [r + factor * w for r, w in rw_iops]
+    lat = list(map(lambda x: x[1], raw_stat))
+    coef = np.polyfit(weighted_iops, lat, poly_degree)
+    f = np.poly1d(coef)
+    result["weighted_iops"] = weighted_iops
+    result["lat"] = lat
+    result["f"] = f
+    return result
 
 
 def reduce_noise_gaussian(stat, factor):
-    result = continuous_curve_fit(stat, factor)
+    result = curve_fit(stat, factor)
     weighted_iops = result["weighted_iops"]
     lat = result["lat"]
     f = result["f"]
@@ -89,21 +86,6 @@ def reduce_noise_gaussian(stat, factor):
         if labels[j] == 1:
             result["weighted_iops"].append(weighted_iops[j])
             result["lat"].append(lat[j])
-    return result
-# reduce noise end
-
-
-def continuous_curve_fit(raw_stat, factor):
-    result = {}
-    # curve_fitting
-    rw_iops = list(map(lambda x: x[0], raw_stat))
-    weighted_iops = [r + factor * w for r, w in rw_iops]
-    lat = list(map(lambda x: x[1], raw_stat))
-    coef = np.polyfit(weighted_iops, lat, poly_degree)
-    f = np.poly1d(coef)
-    result["weighted_iops"] = weighted_iops
-    result["lat"] = lat
-    result["f"] = f
     return result
 
 
@@ -209,8 +191,7 @@ if __name__ == "__main__":
     color = {50: "blue", 75: "orange", 90: "green",
              95: "red", 99: "violet", 100: "cornflowerblue"}
 
-    parser = argparse.ArgumentParser(description="NVMe device profile tool that"
-                                                 " compute write cost factor")
+    parser = argparse.ArgumentParser(description="Compute write cost factor")
     parser.add_argument("dev_dir", help="the dir stores device data")
     parser.add_argument('-p', '--percentage',
                         choices=[95.0, 99.0, 99.5, 99.9], default=99.9,
