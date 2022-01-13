@@ -29,7 +29,7 @@ def compute_tokens(optimal, latSLO):
         if reasonable_root:
             # get the maximum iops
             iops_list.append(max(reasonable_root))
-    return math.floor(np.mean(iops_list))
+    return math.floor(np.mean(iops_list) * 1000)
 
 
 if __name__ == "__main__":
