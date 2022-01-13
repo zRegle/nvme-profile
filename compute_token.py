@@ -4,8 +4,8 @@ import pickle
 import argparse
 
 
-def compute_tokens(optimal, latSLO):
-    job_result = optimal["job_result"]
+def compute_tokens(devmodel, latSLO):
+    job_result = devmodel["job_result"]
     iops_list = []
     for name, result in job_result.items():
         if max(result["lat"]) <= latSLO:
@@ -39,6 +39,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     with open(args.dev_model, "rb") as f:
-        optimal = pickle.load(f)
+        devmodel = pickle.load(f)
         f.close()
-    print(compute_tokens(optimal, args.latency))
+    print(compute_tokens(devmodel, args.latency))

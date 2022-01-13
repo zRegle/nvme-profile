@@ -2,7 +2,6 @@ import os
 import time
 import argparse
 import pickle
-import math
 import json
 import matplotlib.pyplot as plt
 import numpy as np
@@ -99,11 +98,11 @@ def calculate_area(f, g, left, right):
     return area
 
 
-def find_optimal(iops_lat_dict):
+def build_devmodel(iops_lat_dict):
     cur = 2
     factor_upper_bound = 20
     step = 0.1
-    optimal = {}
+    devmodel = {}
     # measured by the area of the overlapped functions
     # lower score is better
     overlap_score = np.inf
@@ -144,29 +143,29 @@ def find_optimal(iops_lat_dict):
         print("overlap score is {}".format(area))
         if overlap_score > area:
             overlap_score = area
-            optimal = {
+            devmodel = {
                 "factor": cur,
                 "job_result": job_result,
             }
         print("***********************END OF ITERATION-{:.1f}***********************\n".format(cur))
         cur += step
-    # save optimal
-    with open(dev_dir + "/optimal.bin", "wb") as f:
-        pickle.dump(optimal, f)
+    # save devmodel
+    with open(dev_dir + "/devmodel.bin", "wb") as f:
+        pickle.dump(devmodel, f)
         f.close()
-    print("Write factor: {:.1f}".format(optimal["factor"]))
-    return optimal
+    print("Write factor: {:.1f}".format(devmodel["factor"]))
+    return devmodel
 
 
-def load_optimal(dev_dir):
-    with open(dev_dir + "/optimal.bin", "rb") as f:
-        optimal = pickle.load(f)
-    return optimal
+def load_model(dev_dir):
+    with open(dev_dir + "/devmodel.bin", "rb") as f:
+        devmodel = pickle.load(f)
+    return devmodel
 
 
 def plot_fig(dev_dir):
-    optimal = load_optimal(dev_dir)
-    job_result = optimal["job_result"]
+    devmodel = load_model(dev_dir)
+    job_result = devmodel["job_result"]
     max_iops = max(map(lambda stat: max(stat["weighted_iops"]), job_result.values()))
     max_lat = max(map(lambda stat: max(stat["lat"]), job_result.values()))
 
@@ -181,9 +180,9 @@ def plot_fig(dev_dir):
 
     plt.ylim(0, max_lat)
     plt.xlabel("Weighted IOPS(K)")
-    plt.ylabel("p99.9 read latency(us)")
+    plt.ylabel("{} read latency(us)".format(p))
     plt.legend()
-    plt.savefig("{}/devmodel.svg".format(dev_dir), format="svg")
+    plt.savefig("{}/performance.svg".format(dev_dir), format="svg")
     plt.show()
 
 
@@ -213,13 +212,14 @@ if __name__ == "__main__":
     if N <= 0:
         print('Integrate points must greater than zero: {}'.format(N))
         exit(-1)
-
     dev_dir = args.dev_dir
+    p = args.percentage
+
     # process raw data
     iops_lat_dict = deserialize_json(dev_dir)
     process_raw(iops_lat_dict, dev_dir)
     # choose best write factor
-    dev_dir = "{}/{}".format(dev_dir, args.percentage)
+    dev_dir = "{}/{}".format(dev_dir, p)
     iops_lat_dict = deserialize_json(dev_dir)
-    find_optimal(iops_lat_dict)
+    build_devmodel(iops_lat_dict)
     plot_fig(dev_dir)
