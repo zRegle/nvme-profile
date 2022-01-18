@@ -6,6 +6,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.covariance import EllipticEnvelope
+from scipy import integrate
 
 
 # read data start
@@ -14,7 +15,7 @@ def deserialize_json(dir):
     files = os.listdir(dir)
     for i in range(0, len(files)):
         path = os.path.join(dir, files[i])
-        if os.path.isfile(path):
+        if os.path.isfile(path) and path.endswith('json'):
             f = open(path, "r")
             # [[r_iops, w_iops], r_clat_percentile]
             data = json.load(f)
@@ -89,13 +90,9 @@ def reduce_noise_gaussian(stat, factor):
 
 
 def calculate_area(f, g, left, right):
-    x = np.linspace(left, right, N)
-    area = 0
-    for i in range(1, len(x)):
-        delta = x[i] - x[i-1]
-        height = abs(f(x[i]) - g(x[i]))
-        area += delta * height
-    return area
+    f_area, _ = integrate.quad(f, left, right)
+    g_area, _ = integrate.quad(g, left, right)
+    return abs(f_area - g_area)
 
 
 def build_devmodel(iops_lat_dict):
@@ -199,18 +196,11 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--degree', default=4,
                         help="polynomial degree of the device model curve",
                         type=int, required=False)
-    parser.add_argument('-n', '--integrate_points', default=int(1e3),
-                        help='integrate points that used to compute curves overlap score',
-                        type=int, required=False)
     args = parser.parse_args()
     # args check
     poly_degree = args.degree
     if poly_degree <= 0:
         print('Polynomial degree must greater than zero: {}'.format(poly_degree))
-        exit(-1)
-    N = args.integrate_points
-    if N <= 0:
-        print('Integrate points must greater than zero: {}'.format(N))
         exit(-1)
     dev_dir = args.dev_dir
     p = args.percentage
