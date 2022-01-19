@@ -7,6 +7,7 @@ profile.py        =====> 运行spdk fio_plugin对nvme设备进行性能测试，
 devmodel.py       =====> 根据测试数据对设备建模, 得出<IOPS, tail latency>曲线和write factor
 compute_token.py  =====> 根据设备模型，给定latency SLO，算出满足要求的令牌数
 ```
+每个python文件都可以用`-h`选项查看用法
 
 ### 准备工作
 
@@ -45,7 +46,7 @@ compute_token.py  =====> 根据设备模型，给定latency SLO，算出满足�
 
 ### 测试nvme设备
 
-1. 运行spdk，接管nvme设备：
+1. 运行spdk的setup.sh脚本，接管nvme设备：
 
    ```shell
    cd spdk
@@ -81,14 +82,14 @@ compute_token.py  =====> 根据设备模型，给定latency SLO，算出满足�
    建模完成后，对应尾延迟的输出目录下会有：
 
    ```
-   devmodel.svg ===> 设备性能曲线图
-   optimal.bin  ===> 设备模型
+   performance.svg ===> 设备性能曲线图
+   devmodel.bin  ===> 设备模型
    ```
 
 2. 运行compute_token.py，给定latency SLO，算出令牌数量：
 
    ```
-   python3 ./compute_token.py ./output/99.9/optimal.bin 3000
+   python3 ./compute_token.py ./output/99.9/devmodel.bin 3000
    546830
    ```
 
