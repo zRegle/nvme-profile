@@ -40,5 +40,4 @@ if __name__ == "__main__":
 
     with open(args.dev_model, "rb") as f:
         devmodel = pickle.load(f)
-        f.close()
     print(compute_tokens(devmodel, args.latency))
