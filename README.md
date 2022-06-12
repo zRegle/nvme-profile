@@ -41,7 +41,7 @@ compute_token.py  =====> 根据设备模型，给定latency SLO，算出满足�
    cd spdk
    git submodule update --init
    ./configure--with-fio=/path/to/fio/repo <other configuration options>
-   make -j12
+   make -j all
    ```
 
 ### 测试nvme设备

@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.covariance import EllipticEnvelope
 from scipy import integrate
+import matplotlib
 
 
 # read data start
@@ -96,7 +97,7 @@ def calculate_area(f, g, left, right):
 
 
 def build_devmodel(iops_lat_dict):
-    cur = 2
+    cur = 1
     factor_upper_bound = 20
     step = 0.1
     devmodel = {}
@@ -149,7 +150,6 @@ def build_devmodel(iops_lat_dict):
     # save devmodel
     with open(dev_dir + "/devmodel.bin", "wb") as f:
         pickle.dump(devmodel, f)
-        f.close()
     print("Write factor: {:.1f}".format(devmodel["factor"]))
     return devmodel
 
@@ -172,20 +172,25 @@ def plot_fig(dev_dir):
         # plot
         min_iops = min(result["weighted_iops"])
         x = np.linspace(min_iops, max_iops, 100)
-        plt.scatter(result["weighted_iops"], result["lat"], color=c)
-        plt.plot(x, result["function"](x), color=c, label=l)
+        # plt.scatter(result["weighted_iops"], result["lat"], color=c)
+        plt.plot(x, result["function"](x), color=c, label=l,
+                 marker=marker[read_ratio], markevery=5)
 
     plt.ylim(0, max_lat)
     plt.xlabel("Weighted IOPS(K)")
-    plt.ylabel("{} read latency(us)".format(p))
+    plt.ylabel("p{} read latency(us)".format(p))
     plt.legend()
-    plt.savefig("{}/performance.svg".format(dev_dir), format="svg")
+    plt.savefig("{}/performance.pdf".format(dev_dir), format="pdf")
     plt.show()
 
 
 if __name__ == "__main__":
     color = {50: "blue", 75: "orange", 90: "green",
              95: "red", 99: "violet", 100: "cornflowerblue"}
+    marker = {50: ".", 75: ",", 90: "o",
+              95: "v", 99: "s", 100: "*"}
+    font = {'size': 13}
+    matplotlib.rc('font', **font)
 
     parser = argparse.ArgumentParser(description="Compute write cost factor")
     parser.add_argument("dev_dir", help="the dir stores device data")
